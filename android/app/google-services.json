@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "934678471918",
+    "project_id": "travelconnect-4d1ce",
+    "storage_bucket": "travelconnect-4d1ce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:934678471918:android:7f2cf5fbcc4a611892ffff",
+        "android_client_info": {
+          "package_name": "com.example.travel_connect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "934678471918-otsp9olp9hvb1erqhf96dnitahq9nmkv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.travel_connect",
+            "certificate_hash": "4bc17450dbbd0d3460acbd79562ae2e4a0134cd0"
+          }
+        },
+        {
+          "client_id": "934678471918-aebkh5visrd38b0sda4of3mebb770boj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDd4sNC-l60z7Q-efdjObJHFlDdPA4NuM0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "934678471918-aebkh5visrd38b0sda4of3mebb770boj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
