@@ -37,8 +37,15 @@ class ChatProvider with ChangeNotifier {
   // Load user chats once (for pull-to-refresh)
   Future<void> loadUserChats(String userId) async {
     print('🔵 [ChatProvider] Loading chats for user: $userId');
-    _isLoading = true;
-    notifyListeners();
+    
+    // Set loading state safely
+    if (_isLoading != true) {
+      _isLoading = true;
+      // Schedule notifyListeners for after the current frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    }
 
     try {
       final querySnapshot = await _firestore
@@ -61,7 +68,7 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  // Get other user info with agent rating (NEW METHOD)
+  // Get other user info (name and photo from users, business name from travelAgents if agent)
   Future<Map<String, dynamic>> getOtherUserInfo(String userId) async {
     try {
       print('🔵 [ChatProvider] Getting info for user: $userId');
@@ -80,17 +87,15 @@ class ChatProvider with ChangeNotifier {
       }
 
       final userData = userDoc.data()!;
-      final name = userData['displayName'] as String? ?? 
-                   userData['email'] as String? ?? 
-                   'Unknown User';
-      final photoUrl = userData['photoUrl'] as String? ?? '';
       final role = userData['role'] as String? ?? '';
       final isAgent = role == 'agent';
+      
+      // Always get photo from users collection (Google Auth photo)
+      final photoUrl = userData['photoUrl'] as String? ?? '';
 
-      print('🔵 [ChatProvider] User info - name: $name, isAgent: $isAgent');
+      print('🔵 [ChatProvider] User isAgent: $isAgent, photoUrl: ${photoUrl.isNotEmpty ? "present" : "empty"}');
 
-      // If agent, get their rating from travelAgents collection
-      double averageRating = 0.0;
+      // If agent, get their business name from travelAgents collection
       if (isAgent) {
         try {
           final agentQuery = await _firestore
@@ -101,21 +106,37 @@ class ChatProvider with ChangeNotifier {
 
           if (agentQuery.docs.isNotEmpty) {
             final agentData = agentQuery.docs.first.data();
-            averageRating = (agentData['averageRating'] as num?)?.toDouble() ?? 0.0;
-            print('✅ [ChatProvider] Agent rating: $averageRating');
+            final businessName = agentData['businessName'] as String? ?? 'Travel Agent';
+            final averageRating = (agentData['averageRating'] as num?)?.toDouble() ?? 0.0;
+            
+            print('✅ [ChatProvider] Agent profile - name: $businessName, rating: $averageRating');
+            
+            return {
+              'name': businessName,
+              'photoUrl': photoUrl, // Photo from users collection (Google Auth)
+              'isAgent': true,
+              'averageRating': averageRating,
+            };
           } else {
             print('🟡 [ChatProvider] No agent profile found for user: $userId');
           }
         } catch (e) {
-          print('🔴 [ChatProvider] Error getting agent rating: $e');
+          print('🔴 [ChatProvider] Error getting agent profile: $e');
         }
       }
 
+      // For non-agents or if agent profile not found, use user data
+      final name = userData['displayName'] as String? ?? 
+                   userData['email'] as String? ?? 
+                   'Unknown User';
+
+      print('✅ [ChatProvider] User info - name: $name');
+
       return {
         'name': name,
-        'photoUrl': photoUrl,
-        'isAgent': isAgent,
-        'averageRating': averageRating,
+        'photoUrl': photoUrl, // Photo from users collection (Google Auth)
+        'isAgent': false,
+        'averageRating': 0.0,
       };
     } catch (e) {
       print('🔴 [ChatProvider] Error getting user info: $e');
@@ -135,8 +156,14 @@ class ChatProvider with ChangeNotifier {
     Map<String, dynamic> user2Details,
   ) async {
     print('🔵 [ChatProvider] Getting or creating chat between $userId1 and $userId2');
-    _isLoading = true;
-    notifyListeners();
+    
+    // Set loading state safely
+    if (_isLoading != true) {
+      _isLoading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    }
 
     try {
       final chatId = await _chatService.getOrCreateChat(
@@ -186,6 +213,9 @@ class ChatProvider with ChangeNotifier {
   void clearCurrentChat() {
     print('🔵 [ChatProvider] Clearing current chat messages');
     _currentChatMessages = [];
-    notifyListeners();
+    // Schedule notifyListeners for after the current frame to avoid calling it during dispose
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }

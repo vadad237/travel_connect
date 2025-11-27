@@ -11,7 +11,7 @@ class MessageBubble extends StatelessWidget {
     required this.message,
     required this.isMe,
     required this.time,
-    this.isRead = false,
+    required this.isRead,
   }) : super(key: key);
 
   @override
@@ -19,28 +19,23 @@ class MessageBubble extends StatelessWidget {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.7,
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
           color: isMe ? Colors.blue : Colors.grey.shade200,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
-          ),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
               message,
               style: TextStyle(
-                color: isMe ? Colors.white : Colors.black,
-                fontSize: 15,
+                color: isMe ? Colors.white : Colors.black87,
+                fontSize: 16,
               ),
             ),
             const SizedBox(height: 4),
@@ -54,12 +49,13 @@ class MessageBubble extends StatelessWidget {
                     fontSize: 11,
                   ),
                 ),
+                // Only show read indicators for messages sent by current user
                 if (isMe) ...[
                   const SizedBox(width: 4),
                   Icon(
                     isRead ? Icons.done_all : Icons.done,
                     size: 14,
-                    color: isRead ? Colors.lightBlueAccent : Colors.white70,
+                    color: isRead ? Colors.blue.shade200 : Colors.white70,
                   ),
                 ],
               ],

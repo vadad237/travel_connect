@@ -14,9 +14,25 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
+  void initState() {
+    super.initState();
+    _loadAgentProfile();
+  }
+
+  Future<void> _loadAgentProfile() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final agentProvider = Provider.of<AgentProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+
+    if (user != null && user.role == 'agent') {
+      await agentProvider.loadCurrentAgentProfile(user.id);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
+    return Consumer2<AuthProvider, AgentProvider>(
+      builder: (context, authProvider, agentProvider, child) {
         final user = authProvider.currentUser;
 
         if (user == null) {
@@ -24,6 +40,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         }
 
         final isAgent = user.role == 'agent';
+        final agentProfile = agentProvider.currentAgentProfile;
+
+        // Use agent business name if available, otherwise use user display name
+        final displayName = (isAgent && agentProfile != null)
+            ? agentProfile.businessName
+            : user.displayName;
+        
+        // Always use user's photoUrl from their account
+        final photoUrl = user.photoUrl;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -31,14 +56,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             children: [
               CircleAvatar(
                 radius: 60,
-                backgroundImage: user.photoUrl.isNotEmpty
-                    ? NetworkImage(user.photoUrl)
+                backgroundImage: photoUrl.isNotEmpty
+                    ? NetworkImage(photoUrl)
                     : const AssetImage('assets/images/default_avatar.png')
                         as ImageProvider,
               ),
               const SizedBox(height: 16),
               Text(
-                user.displayName,
+                displayName,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -72,7 +97,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       MaterialPageRoute(
                         builder: (_) => const EditProfileScreen(),
                       ),
-                    );
+                    ).then((_) => _loadAgentProfile()); // Reload after editing
                   },
                 ),
                 ListTile(
@@ -80,18 +105,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   title: const Text('View My Agent Profile'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () async {
-                    final agentProvider = Provider.of<AgentProvider>(
-                      context,
-                      listen: false,
-                    );
-                    final agent = await agentProvider.getAgentByUserId(user.id);
-                    if (agent != null && mounted) {
+                    if (agentProfile != null) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => AgentProfileScreen(agentId: agent.id),
+                          builder: (_) => AgentProfileScreen(agentId: agentProfile.id),
                         ),
                       );
+                    } else {
+                      final agent = await agentProvider.getAgentByUserId(user.id);
+                      if (agent != null && mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AgentProfileScreen(agentId: agent.id),
+                          ),
+                        );
+                      }
                     }
                   },
                 ),
@@ -136,6 +166,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   );
 
                   if (confirm == true) {
+                    agentProvider.clearCurrentAgentProfile();
                     await authProvider.signOut();
                   }
                 },

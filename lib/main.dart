@@ -67,8 +67,27 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Start listening to chats when authenticated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      
+      if (authProvider.currentUser != null) {
+        chatProvider.listenToUserChats(authProvider.currentUser!.id);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +154,15 @@ class AuthWrapper extends StatelessWidget {
         }
 
         print('🔵 [AuthWrapper] Has role: ${user.role} → AgentCatalogueScreen');
+        
+        // Start listening to chats if not already listening
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+          if (chatProvider.chats.isEmpty) {
+            chatProvider.listenToUserChats(user.id);
+          }
+        });
+        
         return const AgentCatalogueScreen();
       },
     );

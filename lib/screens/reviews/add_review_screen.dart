@@ -32,6 +32,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     super.dispose();
   }
 
+  // ...existing code...
   Future<void> _submitReview() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -61,7 +62,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
       await reviewProvider.createReview(review);
 
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // Pass true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Review submitted successfully')),
         );
@@ -78,6 +79,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
       }
     }
   }
+// ...existing code...
 
   @override
   Widget build(BuildContext context) {

@@ -6,14 +6,17 @@ class AgentProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
   List<TravelAgentModel> _agents = [];
   List<TravelAgentModel> _filteredAgents = [];
+  TravelAgentModel? _currentAgentProfile;
   bool _isLoading = false;
   String _searchQuery = '';
 
   List<TravelAgentModel> get agents => _filteredAgents;
+  TravelAgentModel? get currentAgentProfile => _currentAgentProfile;
   bool get isLoading => _isLoading;
 
   void listenToAgents() {
     _firestoreService.getAgentsStream().listen((agents) {
+      print('🔵 [AgentProvider] Received ${agents.length} agents');
       _agents = agents;
       _applyFilters();
       notifyListeners();
@@ -44,6 +47,24 @@ class AgentProvider with ChangeNotifier {
 
   Future<TravelAgentModel?> getAgentByUserId(String userId) async {
     return await _firestoreService.getAgentByUserId(userId);
+  }
+
+    Future<void> loadCurrentAgentProfile(String userId) async {
+    _isLoading = true;
+    // Schedule notifyListeners for after the current frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+
+    try {
+      _currentAgentProfile = await _firestoreService.getAgentByUserId(userId);
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      print('🔴 [AgentProvider] Error loading agent profile: $e');
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<String> createAgent(TravelAgentModel agent) async {
@@ -81,5 +102,9 @@ class AgentProvider with ChangeNotifier {
     _searchQuery = '';
     _applyFilters();
     notifyListeners();
+  }
+
+  void clearCurrentAgentProfile() {
+    _currentAgentProfile = null;
   }
 }

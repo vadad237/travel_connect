@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/agent_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
-import '../../widgets/agent_card.dart';
 import '../profile/agent_profile_screen.dart';
 import '../chat/chat_list_screen.dart';
 import '../profile/user_profile_screen.dart';
@@ -51,113 +51,125 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
       ];
 
   Widget _buildCatalogueView() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search travel agents...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        setState(() {
-                          _searchController.clear();
-                        });
-                        Provider.of<AgentProvider>(context, listen: false)
-                            .searchAgents('');
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard when tapping outside
+        FocusScope.of(context).unfocus();
+      },
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search travel agents...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                          });
+                          Provider.of<AgentProvider>(context, listen: false)
+                              .searchAgents('');
+                          // Dismiss keyboard after clearing
+                          FocusScope.of(context).unfocus();
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
               ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
+              onChanged: (value) {
+                setState(() {});
+                Provider.of<AgentProvider>(context, listen: false)
+                    .searchAgents(value);
+              },
             ),
-            onChanged: (value) {
-              setState(() {});
-              Provider.of<AgentProvider>(context, listen: false)
-                  .searchAgents(value);
-            },
           ),
-        ),
-        Expanded(
-          child: Consumer<AgentProvider>(
-            builder: (context, agentProvider, child) {
-              if (agentProvider.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          Expanded(
+            child: Consumer<AgentProvider>(
+              builder: (context, agentProvider, child) {
+                if (agentProvider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              if (agentProvider.agents.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.travel_explore,
-                        size: 64,
-                        color: Colors.grey.shade400,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No travel agents found',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey.shade600,
+                if (agentProvider.agents.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.travel_explore,
+                          size: 64,
+                          color: Colors.grey.shade400,
                         ),
-                      ),
-                      if (_searchController.text.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                            });
-                            agentProvider.searchAgents('');
-                          },
-                          child: const Text('Clear search'),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No travel agents found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
+                        if (_searchController.text.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _searchController.clear();
+                              });
+                              agentProvider.searchAgents('');
+                              // Dismiss keyboard after clearing
+                              FocusScope.of(context).unfocus();
+                            },
+                            child: const Text('Clear search'),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    agentProvider.listenToAgents();
+                  },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: agentProvider.agents.length,
+                    itemBuilder: (context, index) {
+                      final agent = agentProvider.agents[index];
+                      return _AgentCardWithReviews(
+                        agent: agent,
+                        onTap: () {
+                          // Dismiss keyboard before navigating
+                          FocusScope.of(context).unfocus();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AgentProfileScreen(agentId: agent.id),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async {
-                  agentProvider.listenToAgents();
-                },
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: agentProvider.agents.length,
-                  itemBuilder: (context, index) {
-                    final agent = agentProvider.agents[index];
-                    return _AgentCardWithReviews(
-                      agent: agent,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AgentProfileScreen(agentId: agent.id),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-              );
-            },
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -167,12 +179,11 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
           // Unread badge on chat icon
           Consumer<ChatProvider>(
             builder: (context, chatProvider, child) {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              final currentUserId = authProvider.currentUser?.id ?? '';
+              
               final unreadCount = chatProvider.chats
-                  .where((chat) {
-                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    final currentUserId = authProvider.currentUser?.id ?? '';
-                    return (chat.unreadCount[currentUserId] ?? 0) > 0;
-                  })
+                  .where((chat) => (chat.unreadCount[currentUserId] ?? 0) > 0)
                   .length;
 
               return Stack(
@@ -241,7 +252,7 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
               ),
               BottomNavigationBarItem(
                 icon: unreadCount > 0
-                    ? Badge(
+                    ? Badge( 
                         label: Text('$unreadCount'),
                         child: const Icon(Icons.chat),
                       )
@@ -260,7 +271,7 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
   }
 }
 
-class _AgentCardWithReviews extends StatelessWidget {
+class _AgentCardWithReviews extends StatefulWidget {
   final dynamic agent;
   final VoidCallback onTap;
 
@@ -270,15 +281,52 @@ class _AgentCardWithReviews extends StatelessWidget {
   });
 
   @override
+  State<_AgentCardWithReviews> createState() => _AgentCardWithReviewsState();
+}
+
+class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
+  String _userPhotoUrl = '';
+  bool _isLoadingPhoto = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserPhoto();
+  }
+
+  Future<void> _loadUserPhoto() async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.agent.userId)
+          .get();
+      
+      if (userDoc.exists && mounted) {
+        final userData = userDoc.data();
+        setState(() {
+          _userPhotoUrl = userData?['photoUrl'] as String? ?? '';
+          _isLoadingPhoto = false;
+        });
+      }
+    } catch (e) {
+      print('🔴 Error loading user photo: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingPhoto = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Safely get values with fallbacks
-    final businessName = agent.businessName ?? 'Unknown Agent';
-    final location = agent.location ?? '';
-    final description = agent.description ?? '';
-    final profilePhoto = agent.profilePhoto ?? '';
-    final averageRating = agent.averageRating ?? 0.0;
-    final reviewCount = agent.reviewCount ?? 0;
-    final specializations = agent.specializations ?? [];
+    final businessName = widget.agent.businessName ?? 'Unknown Agent';
+    final location = widget.agent.location ?? '';
+    final description = widget.agent.description ?? '';
+    final averageRating = widget.agent.averageRating ?? 0.0;
+    final reviewCount = widget.agent.reviewCount ?? 0;
+    final specializations = widget.agent.specializations ?? [];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -288,27 +336,33 @@ class _AgentCardWithReviews extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Profile Photo
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: Colors.grey.shade300,
-                backgroundImage: profilePhoto.isNotEmpty
-                    ? NetworkImage(profilePhoto)
-                    : null,
-                child: profilePhoto.isEmpty
-                    ? Icon(
-                        Icons.person,
-                        size: 40,
-                        color: Colors.grey.shade600,
-                      )
-                    : null,
-              ),
+              _isLoadingPhoto
+                  ? CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.grey.shade300,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.grey.shade300,
+                      backgroundImage: _userPhotoUrl.isNotEmpty
+                          ? NetworkImage(_userPhotoUrl)
+                          : null,
+                      child: _userPhotoUrl.isEmpty
+                          ? Icon(
+                              Icons.person,
+                              size: 40,
+                              color: Colors.grey.shade600,
+                            )
+                          : null,
+                    ),
               const SizedBox(width: 16),
               // Agent Info
               Expanded(

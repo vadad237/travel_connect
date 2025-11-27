@@ -60,7 +60,7 @@ class AuthProvider with ChangeNotifier {
           print('🟡 [AuthProvider] Already have data for this user');
         }
       } else {
-        print('🔵 [AuthProvider] User signed out');
+        print('🔵 [AuthProvider] User signed out, clearing data');
         _currentUser = null;
         notifyListeners();
       }
@@ -202,12 +202,19 @@ class AuthProvider with ChangeNotifier {
   Future<void> signOut() async {
     try {
       print('🔵 [AuthProvider] Signing out...');
+      _isLoading = true;
+      notifyListeners();
+      
       await _authService.signOut();
       _currentUser = null;
+      
+      _isLoading = false;
       print('✅ [AuthProvider] Signed out successfully');
       notifyListeners();
     } catch (e) {
       print('🔴 [AuthProvider] Error signing out: $e');
+      _isLoading = false;
+      notifyListeners();
       rethrow;
     }
   }
