@@ -16,7 +16,6 @@ class AgentProvider with ChangeNotifier {
 
   void listenToAgents() {
     _firestoreService.getAgentsStream().listen((agents) {
-      print('🔵 [AgentProvider] Received ${agents.length} agents');
       _agents = agents;
       _applyFilters();
       notifyListeners();
@@ -49,7 +48,7 @@ class AgentProvider with ChangeNotifier {
     return await _firestoreService.getAgentByUserId(userId);
   }
 
-    Future<void> loadCurrentAgentProfile(String userId) async {
+  Future<void> loadCurrentAgentProfile(String userId) async {
     _isLoading = true;
     // Schedule notifyListeners for after the current frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,7 +60,6 @@ class AgentProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      print('🔴 [AgentProvider] Error loading agent profile: $e');
       _isLoading = false;
       notifyListeners();
     }

@@ -11,11 +11,7 @@ import 'screens/auth/role_selection_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  print('🔵 [Main] Initializing Firebase...');
   await Firebase.initializeApp();
-  print('✅ [Main] Firebase initialized');
-  
   runApp(const MyApp());
 }
 
@@ -67,99 +63,53 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({Key? key}) : super(key: key);
-
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    // Start listening to chats when authenticated
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-      
-      if (authProvider.currentUser != null) {
-        chatProvider.listenToUserChats(authProvider.currentUser!.id);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        print('🔵 [AuthWrapper] Building...');
-        print('🔵 [AuthWrapper] isAuth=${authProvider.isAuthenticated}');
-        print('🔵 [AuthWrapper] hasUser=${authProvider.currentUser != null}');
-        print('🔵 [AuthWrapper] role=${authProvider.currentUser?.role}');
-        print('🔵 [AuthWrapper] isLoading=${authProvider.isLoading}');
-        
-        // Show loading spinner while checking auth state or during operations
+        // Show loading spinner during auth operations
         if (authProvider.isLoading) {
-          print('🔵 [AuthWrapper] Showing loading screen');
           return const Scaffold(
             body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    'Loading...',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
+              child: CircularProgressIndicator(),
             ),
           );
         }
 
-        // Check Firebase Auth state (not just currentUser)
+        // Not authenticated - show login
         if (!authProvider.isAuthenticated) {
-          print('🔵 [AuthWrapper] Not authenticated → LoginScreen');
           return const LoginScreen();
         }
 
-        // User is authenticated but we don't have user data yet
+        // Authenticated but no user data yet
         if (authProvider.currentUser == null) {
-          print('🟡 [AuthWrapper] Authenticated but no user data → Loading...');
           return const Scaffold(
             body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    'Loading user data...',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
+              child: CircularProgressIndicator(),
             ),
           );
         }
 
-        // User is authenticated and has data, check role
         final user = authProvider.currentUser!;
         
+        // No role selected - show role selection
         if (user.role.isEmpty) {
-          print('🔵 [AuthWrapper] No role → RoleSelectionScreen');
           return const RoleSelectionScreen();
         }
 
-        print('🔵 [AuthWrapper] Has role: ${user.role} → AgentCatalogueScreen');
-        
-        // Start listening to chats if not already listening
+        // Start chat listener for authenticated user
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+          final agentProvider = Provider.of<AgentProvider>(context, listen: false);
+          
           if (chatProvider.chats.isEmpty) {
             chatProvider.listenToUserChats(user.id);
+          }
+          if (agentProvider.agents.isEmpty) {
+            agentProvider.listenToAgents();
           }
         });
         

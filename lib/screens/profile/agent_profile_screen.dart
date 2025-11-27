@@ -51,7 +51,7 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
           _userPhotoUrl = userData?['photoUrl'] as String? ?? '';
         }
       } catch (e) {
-        print('🔴 Error fetching user photo: $e');
+        // Silently handle error
       }
     }
     
@@ -116,7 +116,6 @@ class _AgentProfileScreenState extends State<AgentProfileScreen> {
         );
       }
     } catch (e) {
-      print('🔴 Error creating chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),

@@ -309,7 +309,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
         });
       }
     } catch (e) {
-      print('🔴 Error loading user photo: $e');
       if (mounted) {
         setState(() {
           _isLoadingPhoto = false;

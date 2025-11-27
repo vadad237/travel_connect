@@ -106,7 +106,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObse
       
       _scrollToBottom();
     } catch (e) {
-      print('❌ Error in _sendMessage: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send message: $e')),
       );
