@@ -70,7 +70,6 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
-        // Show loading spinner during auth operations
         if (authProvider.isLoading) {
           return const Scaffold(
             body: Center(
@@ -79,12 +78,10 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // Not authenticated - show login
         if (!authProvider.isAuthenticated) {
           return const LoginScreen();
         }
 
-        // Authenticated but no user data yet
         if (authProvider.currentUser == null) {
           return const Scaffold(
             body: Center(
@@ -95,12 +92,10 @@ class AuthWrapper extends StatelessWidget {
 
         final user = authProvider.currentUser!;
         
-        // No role selected - show role selection
         if (user.role.isEmpty) {
           return const RoleSelectionScreen();
         }
 
-        // Start chat listener for authenticated user
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final chatProvider = Provider.of<ChatProvider>(context, listen: false);
           final agentProvider = Provider.of<AgentProvider>(context, listen: false);

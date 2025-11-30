@@ -53,7 +53,6 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
   Widget _buildCatalogueView() {
     return GestureDetector(
       onTap: () {
-        // Dismiss keyboard when tapping outside
         FocusScope.of(context).unfocus();
       },
       child: Column(
@@ -74,7 +73,6 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
                           });
                           Provider.of<AgentProvider>(context, listen: false)
                               .searchAgents('');
-                          // Dismiss keyboard after clearing
                           FocusScope.of(context).unfocus();
                         },
                       )
@@ -125,7 +123,6 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
                                 _searchController.clear();
                               });
                               agentProvider.searchAgents('');
-                              // Dismiss keyboard after clearing
                               FocusScope.of(context).unfocus();
                             },
                             child: const Text('Clear search'),
@@ -148,7 +145,6 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
                       return _AgentCardWithReviews(
                         agent: agent,
                         onTap: () {
-                          // Dismiss keyboard before navigating
                           FocusScope.of(context).unfocus();
                           Navigator.push(
                             context,
@@ -176,7 +172,6 @@ class _AgentCatalogueScreenState extends State<AgentCatalogueScreen> {
         title: const Text('Travel Agents'),
         centerTitle: true,
         actions: [
-          // Unread badge on chat icon
           Consumer<ChatProvider>(
             builder: (context, chatProvider, child) {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -319,7 +314,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
 
   @override
   Widget build(BuildContext context) {
-    // Safely get values with fallbacks
     final businessName = widget.agent.businessName ?? 'Unknown Agent';
     final location = widget.agent.location ?? '';
     final description = widget.agent.description ?? '';
@@ -341,7 +335,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Photo
               _isLoadingPhoto
                   ? CircleAvatar(
                       radius: 40,
@@ -363,12 +356,10 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                           : null,
                     ),
               const SizedBox(width: 16),
-              // Agent Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name
                     Text(
                       businessName,
                       style: const TextStyle(
@@ -378,14 +369,11 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                     ),
                     const SizedBox(height: 6),
                     
-                    // Rating and Reviews (ALWAYS SHOW)
                     Row(
                       children: [
-                        // Star Rating - Always show
                         Row(
                           children: List.generate(5, (index) {
                             if (index < averageRating.floor()) {
-                              // Filled star
                               return Icon(
                                 Icons.star,
                                 size: 16,
@@ -393,14 +381,12 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                               );
                             } else if (index < averageRating.ceil() && 
                                        averageRating % 1 != 0) {
-                              // Half star
                               return Icon(
                                 Icons.star_half,
                                 size: 16,
                                 color: Colors.amber.shade700,
                               );
                             } else {
-                              // Empty star
                               return Icon(
                                 Icons.star_border,
                                 size: 16,
@@ -410,7 +396,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                           }),
                         ),
                         const SizedBox(width: 6),
-                        // Rating number
                         Text(
                           averageRating > 0 
                               ? averageRating.toStringAsFixed(1)
@@ -422,7 +407,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        // Review Count
                         Text(
                           '($reviewCount)',
                           style: TextStyle(
@@ -433,7 +417,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                       ],
                     ),
                     
-                    // Location
                     if (location.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Row(
@@ -459,7 +442,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                       ),
                     ],
                     
-                    // Description
                     if (description.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -474,7 +456,6 @@ class _AgentCardWithReviewsState extends State<_AgentCardWithReviews> {
                       ),
                     ],
                     
-                    // Specializations
                     if (specializations.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Wrap(

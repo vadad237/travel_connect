@@ -30,12 +30,9 @@ class ChatProvider with ChangeNotifier {
     });
   }
 
-  // Load user chats once (for pull-to-refresh)
   Future<void> loadUserChats(String userId) async {
-    // Set loading state safely
     if (_isLoading != true) {
       _isLoading = true;
-      // Schedule notifyListeners for after the current frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         notifyListeners();
       });
@@ -60,10 +57,8 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  // Get other user info (name and photo from users, business name from travelAgents if agent)
   Future<Map<String, dynamic>> getOtherUserInfo(String userId) async {
     try {
-      // Get user document
       final userDoc = await _firestore.collection('users').doc(userId).get();
       
       if (!userDoc.exists) {
@@ -78,11 +73,9 @@ class ChatProvider with ChangeNotifier {
       final userData = userDoc.data()!;
       final role = userData['role'] as String? ?? '';
       final isAgent = role == 'agent';
-      
-      // Always get photo from users collection (Google Auth photo)
+
       final photoUrl = userData['photoUrl'] as String? ?? '';
 
-      // If agent, get their business name from travelAgents collection
       if (isAgent) {
         try {
           final agentQuery = await _firestore
@@ -98,13 +91,13 @@ class ChatProvider with ChangeNotifier {
             
             return {
               'name': businessName,
-              'photoUrl': photoUrl, // Photo from users collection (Google Auth)
+              'photoUrl': photoUrl,
               'isAgent': true,
               'averageRating': averageRating,
             };
           }
         } catch (e) {
-          // Silently handle error
+          
         }
       }
 
@@ -115,7 +108,7 @@ class ChatProvider with ChangeNotifier {
 
       return {
         'name': name,
-        'photoUrl': photoUrl, // Photo from users collection (Google Auth)
+        'photoUrl': photoUrl, 
         'isAgent': false,
         'averageRating': 0.0,
       };
@@ -135,7 +128,6 @@ class ChatProvider with ChangeNotifier {
     Map<String, dynamic> user1Details,
     Map<String, dynamic> user2Details,
   ) async {
-    // Set loading state safely
     if (_isLoading != true) {
       _isLoading = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -174,13 +166,12 @@ class ChatProvider with ChangeNotifier {
     try {
       await _chatService.markMessagesAsRead(chatId, userId);
     } catch (e) {
-      // Silently handle error
+
     }
   }
 
   void clearCurrentChat() {
     _currentChatMessages = [];
-    // Schedule notifyListeners for after the current frame to avoid calling it during dispose
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
     });

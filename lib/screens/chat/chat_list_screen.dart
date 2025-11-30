@@ -251,7 +251,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               otherUserPhoto: photoUrl,
                             ),
                           ),
-                        ).then((_) => _loadChats()); // Reload after returning
+                        ).then((_) => _loadChats()); 
                       },
                     ),
                   );
